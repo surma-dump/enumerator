@@ -19,6 +19,12 @@ proc filllist {} {
     }
 }
 
+proc selectall {} {
+	global flist
+
+	$flist selection set 0 [$flist size]
+}
+
 proc fileext {str} {
     return [string range $str [expr [string last . $str] + 1] [string length $str]]
 }
@@ -52,6 +58,15 @@ proc dorename {} {
     filllist
 }
 
+proc lreverse {lst} {
+
+	set size [llength $lst]
+	for {set count 0} {$count < $size} {incr count} {
+		lappend l [lindex $lst [expr $size - $count - 1]]
+	}
+	return $l
+}
+
 proc moveup {} {
     global flist
 
@@ -66,6 +81,8 @@ proc moveup {} {
         }
     }
 
+    $flist selection clear 0 [$flist size]
+
     foreach sel $sels {
         $flist selection set $sel
     }
@@ -74,16 +91,18 @@ proc moveup {} {
 proc movedown {} {
     global flist
 
-    set sels [$flist curselection]
+    set sels [lreverse [$flist curselection]]
 
     foreach sel $sels {
-        if {[expr $sel != [expr [llength [$flist get 0 end]] - 1]]} {
+        if {[expr $sel != [expr [$flist size] - 1]]} {
             set val [$flist get $sel]
             $flist del $sel
             $flist insert [expr $sel + 1] $val
             lset sels [lsearch $sels $sel] [expr $sel + 1]
         }
     }
+
+    $flist selection clear 0 [$flist size]
 
     foreach sel $sels {
         $flist selection set $sel
@@ -103,14 +122,17 @@ proc genbuttonframe {gf3} {
         -column 2 -row 0 -sticky w -padx 5
     grid [button $f3.c4 -text "Refresh" -command filllist] \
         -column 3 -row 0 -sticky w -padx 5
+    grid [button $f3.c5 -text "All" -command selectall] \
+        -column 4 -row 0 -sticky w -padx 5
 }
+
 proc genframe1 {gf1 gflist} {
     upvar $gf1 f1
     upvar $gflist flist 
 
     set f1 [frame .f1]
     set s1 [scrollbar $f1.s1]
-    set flist [listbox $f1.flist -selectmode multiple]
+    set flist [listbox $f1.flist -selectmode extended]
     $flist config -yscrollcommand "$s1 set"
     $s1 config -command "$flist yview"
     grid $flist -column 0 -row 0 -sticky news -padx 5 -pady 5
@@ -137,11 +159,17 @@ proc genframe2 {gf2 gtemplate} {
     pack [label $f2.l2 -text "Old extension will be concatenated automatically!\n%d will be replaced with position\njust like printf...\n" \
         -relief ridge -justify left] -side top -fill x -pady 10 -padx 5
     set f3 [frame $f2.f3]
-    pack [button $f3.b2 -text "Quit" -command exit] -side right -pady 5
-    pack [button $f3.b1 -text "Rename" -command dorename] -side right -pady 5
+    pack [button $f3.b1 -text "Quit" -command exit] -side right -pady 5
+    pack [button $f3.b2 -text "Rename" -command dorename] -side right -pady 5
+    pack [button $f3.b3 -text "Add Placeholder" -command addplaceholder] -side right -pady 5
     pack $f3 -side top -anchor e
 }
 
+proc addplaceholder {} {
+	global template
+
+	$template insert end "%02d"
+}
 proc togglehidden {} {
     global hidden
     set hidden [expr !$hidden]
