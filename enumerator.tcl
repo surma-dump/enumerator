@@ -10,6 +10,9 @@ proc filllist {} {
         set files [glob -directory ${path} -tail *]
     }
 
+
+    set files [lsort -dictionary $files]
+
     $flist delete 0 end
     foreach w $files {
         $flist insert end $w
@@ -46,6 +49,7 @@ proc dorename {} {
 
         set count [expr $count + 1]
     }
+    filllist
 }
 
 proc moveup {} {
@@ -97,6 +101,8 @@ proc genbuttonframe {gf3} {
         -column 1 -row 0 -sticky w -padx 5
     grid [button $f3.c3 -text "Down" -command movedown] \
         -column 2 -row 0 -sticky w -padx 5
+    grid [button $f3.c4 -text "Refresh" -command filllist] \
+        -column 3 -row 0 -sticky w -padx 5
 }
 proc genframe1 {gf1 gflist} {
     upvar $gf1 f1
