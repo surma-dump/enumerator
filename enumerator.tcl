@@ -29,6 +29,13 @@ proc fileext {str} {
     return [string range $str [expr [string last . $str] + 1] [string length $str]]
 }
 
+proc createdummy {} {
+	for {set i 0} {[file exists ${i}.dummy]} {incr i} {}
+	set f [open ${i}.dummy w+ 0644]
+	close $f
+	filllist
+}
+
 proc dorename {} {
     global flist template
     
@@ -124,6 +131,8 @@ proc genbuttonframe {gf3} {
         -column 3 -row 0 -sticky w -padx 5
     grid [button $f3.c5 -text "All" -command selectall] \
         -column 4 -row 0 -sticky w -padx 5
+    grid [button $f3.c6 -text "Dummy" -command createdummy] \
+        -column 5 -row 0 -sticky w -padx 5
 }
 
 proc genframe1 {gf1 gflist} {
