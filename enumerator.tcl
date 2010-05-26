@@ -2,12 +2,12 @@
 
 
 proc filllist {} {
-    global flist hidden
+    global flist hidden path
 
     if {$hidden} {
-        set files [glob {{.[a-zA-Z0-9],}*}]
+        set files [glob -directory ${path} -tail {{.[a-zA-Z0-9],}*}]
     } else {
-        set files [glob *]
+        set files [glob -directory ${path} -tail *]
     }
 
     $flist delete 0 end
@@ -128,9 +128,12 @@ proc genframe2 {gf2 gtemplate} {
     pack [label $f2.l1 -text "Template:"] -side top -anchor w -padx 5
     set template [entry $f2.template]
     pack $template -side top -fill x -padx 5
-    pack [label $f2.l2 -text "Old extension will be concatenated automatically!\n%d - Number in order\njust like printf...\n%E - old file extension" \
+    pack [label $f2.l2 -text "Old extension will be concatenated automatically!\n%d will be replaced with position\njust like printf...\n" \
         -relief ridge -justify left] -side top -fill x -pady 10 -padx 5
-    pack [button $f2.b1 -text "Rename" -command dorename] -side top -anchor e -pady 5
+    set f3 [frame $f2.f3]
+    pack [button $f3.b2 -text "Quit" -command exit] -side right -pady 5
+    pack [button $f3.b1 -text "Rename" -command dorename] -side right -pady 5
+    pack $f3 -side top -anchor e
 }
 
 proc togglehidden {} {
@@ -154,6 +157,11 @@ proc makegui {gflist gtemplate} {
 
 }
 
+if {[expr $argc > 0]} {
+    set path [lindex $argv 0]
+} else {
+    set path ""
+}
 set hidden false
 makegui flist template
 filllist
