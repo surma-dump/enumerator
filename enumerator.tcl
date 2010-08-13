@@ -1,5 +1,6 @@
-#!/usr/bin/wish
-
+#!/bin/sh
+# Tcl ignores the next line -*- tcl -*- \
+exec wish "$0" -- "$@"
 
 proc filllist {} {
     global flist hidden path
