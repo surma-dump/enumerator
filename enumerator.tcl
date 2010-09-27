@@ -59,7 +59,9 @@ proc dorename {} {
         set newname [format $temp $count]
         set newname "$newname.$ext"
 
-        file rename $ffile $newname
+	if { [expr ! [string equal $ffile $newname] ] } {
+		file rename $ffile $newname
+	}
 
         set count [expr $count + 1]
     }
