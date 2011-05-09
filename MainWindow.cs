@@ -6,6 +6,8 @@ using Gtk;
 
 public partial class MainWindow : Gtk.Window
 {
+	private const int RENAME_COLUMN = 0;
+	private const int FILENAME_COLUMN = 1;
 	private Gtk.ListStore listdata;
 	
 	public MainWindow () : base(Gtk.WindowType.Toplevel)
@@ -20,10 +22,24 @@ public partial class MainWindow : Gtk.Window
 		a.RetVal = true;
 	}
 
+	private Gtk.CellRendererToggle CreateRenameCellRenderer() {
+		Gtk.CellRendererToggle renameToggle = new Gtk.CellRendererToggle();
+		renameToggle.Activatable = true;
+		renameToggle.Toggled += (object o, Gtk.ToggledArgs ta) => {
+			Gtk.TreeIter it;
+			if(this.listdata.GetIter(out it, new TreePath(ta.Path))) {
+				bool oldValue = (bool)this.listdata.GetValue(it, RENAME_COLUMN);
+				this.listdata.SetValue(it, RENAME_COLUMN, !oldValue);
+			}
+		};
+		return renameToggle;
+	}
+
 	private void SetupFilelist() {
-		listdata = new Gtk.ListStore(typeof(string));
+		listdata = new Gtk.ListStore(typeof(bool), typeof(string));
 		this.filelist.Model = listdata;
-		this.filelist.AppendColumn("Filename", new Gtk.CellRendererText(), "text", 0);
+		this.filelist.AppendColumn("Rename?", CreateRenameCellRenderer(), "active", RENAME_COLUMN);
+		this.filelist.AppendColumn("Old Filename", new Gtk.CellRendererText(), "text", FILENAME_COLUMN);
 	}
 
 	private string PathToFilename(string fullPath) {
@@ -36,7 +52,7 @@ public partial class MainWindow : Gtk.Window
 		List<string> files = new List<string>(Directory.GetFiles(new Uri(this.directorychooser.Uri).LocalPath));
 		files = files.ConvertAll<string>(new Converter<string, string>(this.PathToFilename));
 		foreach(string file in files) {
-			this.listdata.AppendValues(file);
+			this.listdata.AppendValues(true, file);
 		}
 	}
 
@@ -58,8 +74,12 @@ public partial class MainWindow : Gtk.Window
 		string template = this.templatefield.Text;
 		int i = 0;
 		foreach(object[] rowitem in this.listdata) {
+			if(!(bool)rowitem[RENAME_COLUMN]) {
+				continue;
+			}
+			
 			i++;
-			string filename = (string)rowitem[0];
+			string filename = (string)rowitem[FILENAME_COLUMN];
 			string filepath = new Uri(this.directorychooser.Uri + "/" + filename).LocalPath;
 			string extension = System.IO.Path.GetExtension(filename);
 			string newfilename = String.Format(template, i) + extension;
