@@ -193,7 +193,8 @@
         <child>
           <widget class="Gtk.HButtonBox" id="hbuttonbox1">
             <property name="MemberName" />
-            <property name="Size">2</property>
+            <property name="Size">3</property>
+            <property name="LayoutStyle">Spread</property>
             <child>
               <widget class="Gtk.Button" id="applybutton">
                 <property name="MemberName" />
@@ -221,6 +222,21 @@
               </widget>
               <packing>
                 <property name="Position">1</property>
+                <property name="Expand">False</property>
+                <property name="Fill">False</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="Gtk.Button" id="dummybutton">
+                <property name="MemberName" />
+                <property name="CanFocus">True</property>
+                <property name="Type">TextOnly</property>
+                <property name="Label" translatable="yes">Add Dummy</property>
+                <property name="UseUnderline">True</property>
+                <signal name="Clicked" handler="AddDummyEvent" />
+              </widget>
+              <packing>
+                <property name="Position">2</property>
                 <property name="Expand">False</property>
                 <property name="Fill">False</property>
               </packing>

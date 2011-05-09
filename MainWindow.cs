@@ -47,9 +47,13 @@ public partial class MainWindow : Gtk.Window
 			return segments[segments.Length - 1];
 	}
 
+	private string GetSelectedDirectoryPath() {
+		return new Uri (this.directorychooser.Uri).LocalPath;
+	}
+
 	private void LoadCurrentFolder() {
 		this.listdata.Clear();
-		List<string> files = new List<string>(Directory.GetFiles(new Uri(this.directorychooser.Uri).LocalPath));
+		List<string> files = new List<string>(Directory.GetFiles(GetSelectedDirectoryPath()));
 		files = files.ConvertAll<string>(new Converter<string, string>(this.PathToFilename));
 		foreach(string file in files) {
 			this.listdata.AppendValues(true, file);
@@ -102,6 +106,7 @@ public partial class MainWindow : Gtk.Window
 		this.templatefield.Sensitive = false;
 		this.applybutton.Sensitive = false;
 		this.refreshbutton.Sensitive = false;
+		this.dummybutton.Sensitive = false;
 		this.cancelbutton.Sensitive = true;
 	}
 
@@ -110,6 +115,7 @@ public partial class MainWindow : Gtk.Window
 		this.templatefield.Sensitive = true;
 		this.applybutton.Sensitive = true;
 		this.refreshbutton.Sensitive = true;
+		this.dummybutton.Sensitive = true;
 		this.cancelbutton.Sensitive = false;
 	}
 
@@ -124,5 +130,25 @@ public partial class MainWindow : Gtk.Window
 	protected virtual void ShowHelpEvent (object sender, System.EventArgs e)
 	{
 		System.Diagnostics.Process.Start("http://blog.stevex.net/string-formatting-in-csharp/");
+	}
+
+	private void AddDummy()
+	{
+		string dir = GetSelectedDirectoryPath();
+		int count = 0;
+		string dummyFilePath = "";
+
+		do {
+			dummyFilePath = new Uri(String.Format(dir+"/{0:000}.dummy", count)).LocalPath;
+			count++;
+		} while(File.Exists(dummyFilePath));
+
+		File.Create(dummyFilePath).Close();
+		LoadCurrentFolder();
+	}
+
+	protected virtual void AddDummyEvent (object sender, System.EventArgs e)
+	{
+		AddDummy();
 	}
 }
