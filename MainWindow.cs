@@ -60,7 +60,7 @@ public partial class MainWindow : Gtk.Window
 		}
 	}
 
-	protected virtual void LoadFolderEvent (object sender, System.EventArgs e) {
+	protected virtual void LoadFolderEvent (object sender, EventArgs e) {
 		this.LoadCurrentFolder();
 	}
 
@@ -69,9 +69,9 @@ public partial class MainWindow : Gtk.Window
 	}
 
 	private void Log(String line) {
-		this.logview.Buffer.Text += line+"\n";
-		Gtk.ScrolledWindow view = (Gtk.ScrolledWindow)this.logview.Parent;
-		view.Vadjustment.Value = view.Vadjustment.Upper;
+		Gtk.Application.Invoke((object o, EventArgs e) => {
+			this.logview.Buffer.Text += line+"\n";
+		});
 	}
 
 	private void RenameFiles() {
@@ -122,9 +122,8 @@ public partial class MainWindow : Gtk.Window
 	protected virtual void RenameFilesEvent (object sender, System.EventArgs e)
 	{
 		ProcessStarted();
-		//Thread t = new Thread(new ParameterizedThreadStart(this.RenameFilesThreadStart));
-		//t.Start();
-		this.RenameFiles();
+		Thread t = new Thread(new ParameterizedThreadStart(this.RenameFilesThreadStart));
+		t.Start();
 	}
 	
 	protected virtual void ShowHelpEvent (object sender, System.EventArgs e)
