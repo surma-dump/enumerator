@@ -39,6 +39,8 @@ public partial class MainWindow
 
 	private global::Gtk.TextView logview;
 
+	private global::Gtk.ProgressBar progressbar;
+
 	protected virtual void Build ()
 	{
 		global::Stetic.Gui.Initialize (this);
@@ -217,12 +219,20 @@ public partial class MainWindow
 		global::Gtk.Box.BoxChild w17 = ((global::Gtk.Box.BoxChild)(this.vbox1[this.GtkScrolledWindow1]));
 		w17.Position = 4;
 		w17.Expand = false;
+		// Container child vbox1.Gtk.Box+BoxChild
+		this.progressbar = new global::Gtk.ProgressBar ();
+		this.progressbar.Name = "progressbar";
+		this.vbox1.Add (this.progressbar);
+		global::Gtk.Box.BoxChild w18 = ((global::Gtk.Box.BoxChild)(this.vbox1[this.progressbar]));
+		w18.Position = 5;
+		w18.Expand = false;
+		w18.Fill = false;
 		this.Add (this.vbox1);
 		if ((this.Child != null)) {
 			this.Child.ShowAll ();
 		}
 		this.DefaultWidth = 400;
-		this.DefaultHeight = 300;
+		this.DefaultHeight = 316;
 		this.Show ();
 		this.DeleteEvent += new global::Gtk.DeleteEventHandler (this.OnDeleteEvent);
 		this.refreshbutton.Clicked += new global::System.EventHandler (this.LoadFolderEvent);

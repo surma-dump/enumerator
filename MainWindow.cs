@@ -4,16 +4,72 @@ using System.IO;
 using System.Threading;
 using Gtk;
 
+class Progress {
+	public const byte FLAG_DONE    = 0x01;
+	public const byte FLAG_MESSAGE = 0x02;
+	public const byte FLAG_RUNNING = 0x04;
+
+	public object lockObject = new object();
+	public byte Flags = 0;
+	public int CurrentPos = 0;
+	public int Total = 0;
+	public string Filename = "";
+	public Queue<string> MsgQueue = new Queue<string>();
+
+	public bool IsFlagSet(int flag) {
+		return (this.Flags & flag) > 0;
+	}
+
+	public void SetFlag(byte flag) {
+		lock(this.lockObject) {
+			this.Flags |= flag;
+		}
+	}
+
+	public void UnsetFlag(byte flag) {
+		lock(this.lockObject) {
+			this.Flags &= (byte)~flag;
+		}
+	}
+}
+
 public partial class MainWindow : Gtk.Window
 {
 	private const int RENAME_COLUMN = 0;
 	private const int FILENAME_COLUMN = 1;
 	private Gtk.ListStore listdata;
-	
+	private Progress progressdata = new Progress();
+
 	public MainWindow () : base(Gtk.WindowType.Toplevel)
 	{
 		Build ();
-		SetupFilelist();
+		SetupFilelistView();
+		GLib.Timeout.Add(500, UpdateStatus);
+	}
+
+	private bool UpdateStatus() {
+		if(this.progressdata.IsFlagSet(Progress.FLAG_MESSAGE)) {
+			while(this.progressdata.MsgQueue.Count > 0) {
+				this.logview.Buffer.Text += this.progressdata.MsgQueue.Dequeue()+"\n";
+			}
+			this.progressdata.UnsetFlag(Progress.FLAG_MESSAGE);
+		}
+
+		if(this.progressdata.IsFlagSet(Progress.FLAG_DONE)) {
+			LoadCurrentFolder();
+			ProcessDone();
+			this.progressdata.UnsetFlag(Progress.FLAG_DONE);
+		}
+
+		if (this.progressdata.IsFlagSet(Progress.FLAG_RUNNING)) {
+			this.progressbar.Text = String.Format("{0} ({1}/{2})", this.progressdata.Filename, this.progressdata.CurrentPos, this.progressdata.Total);
+			this.progressbar.Fraction = (double)this.progressdata.CurrentPos / (double)this.progressdata.Total;
+		} else {
+			this.progressbar.Text = "Done";
+			this.progressbar.Fraction = 1.0;
+		}
+
+		return true;
 	}
 
 	protected void OnDeleteEvent (object sender, DeleteEventArgs a)
@@ -35,7 +91,7 @@ public partial class MainWindow : Gtk.Window
 		return renameToggle;
 	}
 
-	private void SetupFilelist() {
+	private void SetupFilelistView() {
 		listdata = new Gtk.ListStore(typeof(bool), typeof(string));
 		this.filelist.Model = listdata;
 		this.filelist.AppendColumn("Rename?", CreateRenameCellRenderer(), "active", RENAME_COLUMN);
@@ -69,19 +125,32 @@ public partial class MainWindow : Gtk.Window
 	}
 
 	private void Log(String line) {
-		Gtk.Application.Invoke((object o, EventArgs e) => {
-			this.logview.Buffer.Text += line+"\n";
-		});
+		this.progressdata.MsgQueue.Enqueue(line);
+		this.progressdata.SetFlag(Progress.FLAG_MESSAGE);
 	}
 
-	private void RenameFiles() {
-		string template = this.templatefield.Text;
+	private int GetFileCount() {
 		int i = 0;
 		foreach(object[] rowitem in this.listdata) {
 			if(!(bool)rowitem[RENAME_COLUMN]) {
 				continue;
 			}
-			
+			i++;
+		}
+		return i;
+	}
+
+	private void RenameFiles() {
+		string template = this.templatefield.Text;
+		this.progressdata.Total = GetFileCount();
+
+		this.progressdata.SetFlag(Progress.FLAG_RUNNING);
+		int i = 0;
+		foreach(object[] rowitem in this.listdata) {
+			if(!(bool)rowitem[RENAME_COLUMN]) {
+				continue;
+			}
+
 			i++;
 			string filename = (string)rowitem[FILENAME_COLUMN];
 			string filepath = new Uri(this.directorychooser.Uri + "/" + filename).LocalPath;
@@ -89,7 +158,9 @@ public partial class MainWindow : Gtk.Window
 			string newfilename = String.Format(template, i) + extension;
 			string newfilepath = new Uri(this.directorychooser.Uri + "/" + newfilename).LocalPath;
 
-			Log(filename + " => " + newfilename);
+			this.progressdata.CurrentPos = i;
+			this.progressdata.Filename = filename;
+
 			try {
 				File.Move(filepath, newfilepath);
 			} catch (IOException e) {
@@ -97,8 +168,8 @@ public partial class MainWindow : Gtk.Window
 				continue;
 			}
 		}
-		LoadCurrentFolder();
-		ProcessDone();
+		this.progressdata.SetFlag(Progress.FLAG_DONE);
+		this.progressdata.UnsetFlag(Progress.FLAG_RUNNING);
 	}
 
 	private void ProcessStarted() {
