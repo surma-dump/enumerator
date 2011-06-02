@@ -145,7 +145,7 @@ public partial class MainWindow : Gtk.Window
 		this.progressdata.Total = GetFileCount();
 
 		this.progressdata.SetFlag(Progress.FLAG_RUNNING);
-		int i = 0;
+		int i = (int)this.startIndex.Value-1;
 		foreach(object[] rowitem in this.listdata) {
 			if(!(bool)rowitem[RENAME_COLUMN]) {
 				continue;
@@ -178,6 +178,7 @@ public partial class MainWindow : Gtk.Window
 		this.applybutton.Sensitive = false;
 		this.refreshbutton.Sensitive = false;
 		this.dummybutton.Sensitive = false;
+		this.startIndex.Sensitive = false;
 		this.cancelbutton.Sensitive = true;
 	}
 
@@ -187,6 +188,7 @@ public partial class MainWindow : Gtk.Window
 		this.applybutton.Sensitive = true;
 		this.refreshbutton.Sensitive = true;
 		this.dummybutton.Sensitive = true;
+		this.startIndex.Sensitive = true;
 		this.cancelbutton.Sensitive = false;
 	}
 
